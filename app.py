@@ -1,10 +1,9 @@
-from fastapi import FastAPI, File, UploadFile, HTTPException
+from fastapi import FastAPI, File, Query, UploadFile, HTTPException
 from fastapi.responses import JSONResponse
 import openai
 import pdfplumber
 import io
 from dotenv import load_dotenv
-import os
 
 load_dotenv()
 
@@ -15,7 +14,7 @@ def read_root():
     return {"I am Healthy App"}
 
 @app.post("/upload/")
-async def upload_files(cv: UploadFile = File(...), job_description: UploadFile = File(...), token: UploadFile = File(...)):
+async def upload_files(cv: UploadFile = File(...), job_description: UploadFile = File(...), token: str = Query(...)):
     """
     Accepts a CV and a job description, analyzes the CV in relation to the job description using OpenAI.
 
@@ -26,7 +25,7 @@ async def upload_files(cv: UploadFile = File(...), job_description: UploadFile =
     Returns:
         JSONResponse: The result of the CV analysis or an error message in JSON format.
     """
-
+    print(token)
     if cv.content_type not in ['application/pdf', 'text/plain'] or job_description.content_type not in ['application/pdf', 'text/plain']:
         raise HTTPException(status_code=400, detail="Invalid file format. Please upload PDF or plain text files.")
 
