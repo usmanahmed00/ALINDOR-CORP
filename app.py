@@ -15,25 +15,25 @@ def read_root():
     return {"I am Healthy App"}
 
 @app.post("/upload/")
-async def upload_files(cv: UploadFile = File(...), job_description: UploadFile = File(...)):
+async def upload_files(cv: UploadFile = File(...), job_description: UploadFile = File(...), token: UploadFile = File(...)):
     """
     Accepts a CV and a job description, analyzes the CV in relation to the job description using OpenAI.
 
     Args:
         cv (UploadFile): The uploaded CV file.
         job_description (UploadFile): The uploaded job description file.
-    
+
     Returns:
         JSONResponse: The result of the CV analysis or an error message in JSON format.
     """
 
     if cv.content_type not in ['application/pdf', 'text/plain'] or job_description.content_type not in ['application/pdf', 'text/plain']:
         raise HTTPException(status_code=400, detail="Invalid file format. Please upload PDF or plain text files.")
-    
+
     try:
         cv_text = await extract_text(cv)
         jd_text = await extract_text(job_description)
-        result = analyze_documents(cv_text, jd_text)
+        result = analyze_documents(cv_text, jd_text, token)
         return JSONResponse(content={"analysis": result})
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
@@ -68,7 +68,7 @@ async def extract_text(file: UploadFile) -> str:
 
 
 
-def analyze_documents(cv_text, jd_text):
+def analyze_documents(cv_text, jd_text, token):
     """
     Analyzes the CV text against the job description text using the OpenAI API.
 
@@ -80,10 +80,10 @@ def analyze_documents(cv_text, jd_text):
         str: A summary of how the CV matches the job description.
     """
     try:
-        openai.api_key = os.getenv('OPENAI_API_KEY')  
+        openai.api_key = token
 
         response = openai.ChatCompletion.create(
-            model=os.getenv('MODEL_NAME', 'gpt-4-1106-preview'), 
+            model='gpt-4-1106-preview',
             messages=[
                 {"role": "system", "content": "You are an assistant who is expert in evaluating the CV according to job description."},
                 {"role": "user", "content": f"""CV:\n{cv_text}\n\nJob Description:\n{jd_text}\n\n
